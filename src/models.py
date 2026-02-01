@@ -4,6 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 db = SQLAlchemy()
 
+#Relacion entre usuario y character: muchos a muchos
 favs_characters_table = Table(
     "favs_characters",
     db.Model.metadata,
@@ -11,6 +12,7 @@ favs_characters_table = Table(
     Column("character_id", ForeignKey("character.id"), primary_key=True)
 )
 
+#Relacion entre usuario y locations: muchos a muchos
 favs_locations_table = Table(
     "favs_locations",
     db.Model.metadata,
@@ -35,11 +37,12 @@ class User(db.Model):
         back_populates="favorited_by"
     )
 
-    def serialize(self):
+    def serialize(self):      #NOTA: Método para convertir un User a diccionario JSON.
         return {
             "id": self.id,
             "email": self.email,
-            "favorites": self.favorites
+            "favs_characters": self.favs_characters,
+            "favs_locations": self.favs_locations,
             # do not serialize the password, its a security breach
         }
     
@@ -54,7 +57,7 @@ class Character(db.Model):
     occupation: Mapped[str] = mapped_column(String(120), nullable=False) 
     phrases: Mapped[str] = mapped_column(String(200), nullable=True) 
 
-    favorited_by: Mapped[list["User"]] = relationship(
+    favorited_by: Mapped[list["User"]] = relationship( #permite saber qué usuarios marcaron este personaje como favorito.
         "User",
         secondary=favs_characters_table,
         back_populates="favs_characters"
@@ -80,7 +83,7 @@ class Location (db.Model):
     town: Mapped[str] = mapped_column(String(120), nullable=False)
     use: Mapped[str] = mapped_column(String(120), nullable=False)
 
-    favorited_by: Mapped[list["User"]] = relationship(
+    favorited_by: Mapped[list["User"]] = relationship( #permite saber qué usuarios marcaron esta ubicación como favorita.
         "User",
         secondary=favs_locations_table,
         back_populates="favs_locations"
